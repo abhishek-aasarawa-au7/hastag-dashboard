@@ -1,5 +1,4 @@
 import Twit from "twit";
-import SSE from "express-sse";
 
 // configs
 import {
@@ -15,8 +14,6 @@ import response from "./utils/response";
 import catchError from "./utils/catchError";
 
 const controller = {};
-
-const sse = new SSE();
 
 // twitter setting
 let T = new Twit({
@@ -43,55 +40,6 @@ controller.tweets = catchError(async (req, res, next) => {
       response(res, data, "tweets fetched", false, 200);
     }
   );
-});
-
-// setting stream
-controller.stream = catchError(async (req, res, next) => {
-  // // setting stream header
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive",
-  });
-
-  let stream = T.stream("statuses/filter", { track: "#apple" });
-
-  stream.on("tweet", function (tweet) {
-    console.log(tweet.text.length);
-    res.write("length: " + tweet.text.length + "\n\n");
-  });
-
-  stream.on("disconnect", function (disconnectMessage) {
-    console.log(disconnectMessage);
-    stream.stop();
-    res.end();
-  });
-
-  stream.on("error", function (err) {
-    console.log(err.message);
-    stream.stop();
-    res.end();
-  });
-
-  // setting stream header
-  // sse.init(req, res);
-
-  // let stream = T.stream("statuses/filter", { track: "#apple" });
-
-  // stream.on("tweet", function (tweet) {
-  //   console.log(tweet.text.length);
-  //   sse.send(tweet.text.length, "hashtag");
-  // });
-
-  // stream.on("disconnect", function (disconnectMessage) {
-  //   console.log(disconnectMessage);
-  //   stream.stop();
-  // });
-
-  // stream.on("error", function (err) {
-  //   console.log(err.message);
-  //   stream.stop();
-  // });
 });
 
 export default controller;

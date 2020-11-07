@@ -1,66 +1,79 @@
-import React, { useEffect } from "react";
-import Axios from "axios";
+import React, { Fragment, useState, useEffect } from "react";
+import { map, sum } from "lodash";
+
+// subscribe
+import { subscribe, unsubscribe } from "../handlers/subscribe";
+
+const hashtags = [
+  "ExitPolls",
+  "#EVEMUN",
+  "#CallTheElection",
+  "#GetWellSoonYoongi",
+];
+
+const makeObject = (hashtags) => {
+  let obj = {};
+  for (let hashtag of hashtags) {
+    obj[hashtag] = { list: [], size: 0 };
+  }
+  return obj;
+};
+
+const average = (arr) => {
+  let s = sum(arr);
+  let value = Math.floor(s / arr.length);
+  return !!value ? value : 0;
+};
 
 const List = () => {
-  // (async () => {
-  //   try {
-  //     let response = await Axios.get("http://localhost:5000/api/tweets");
-  //     console.log(response.data);
-  //   } catch (err) {
-  //     console.dir(err);
-  //   }
-  // })();
+  const [data, setData] = useState(makeObject(hashtags));
 
-  (async () => {
-    if (!!window.EventSource) {
-      var source = new EventSource("http://localhost:5000/api/stream");
-
-      source.addEventListener(
-        "hashtag",
-        function (e) {
-          console.log(e.data);
-        },
-        false
-      );
-
-      source.addEventListener(
-        "message",
-        function (e) {
-          console.log(e.data);
-        },
-        false
-      );
-
-      source.onmessage = function (e) {
-        console.log(e.data);
-      };
-
-      source.addEventListener(
-        "open",
-        function (e) {
-          console.log("open..", e.data);
-        },
-        false
-      );
-
-      source.addEventListener(
-        "error",
-        function (e) {
-          if (e.eventPhase === EventSource.CLOSED) source.close();
-          if (e.target.readyState === EventSource.CLOSED) {
-            console.log("disconnected", e.data);
-          } else if (e.target.readyState === EventSource.CONNECTING) {
-            console.log("connecting..", e.data);
+  useEffect(() => {
+    const receiveUpdate = (err, value, hashtag) => {
+      if (!err) {
+        // if length of arr is less than 50
+        setData((prevData) => {
+          console.log(prevData, hashtag);
+          if (prevData[hashtag].size < 50) {
+            return {
+              ...prevData,
+              [hashtag]: {
+                ...prevData[hashtag],
+                list: [...prevData[hashtag].list, value],
+                size: prevData[hashtag].size + 1,
+              },
+            };
+          } else {
+            let arr = [...prevData[hashtag].list];
+            arr.splice(0, 1);
+            return {
+              ...prevData,
+              [hashtag]: {
+                ...prevData[hashtag],
+                list: [...arr, value],
+              },
+            };
           }
-        },
-        false
-      );
-    } else {
-      console.log("Your browser doesn't support SSE");
-    }
-  })();
+        });
+      }
+    };
+    subscribe(receiveUpdate, hashtags);
 
-  return <h1>List</h1>;
+    // unsubscribe when component unmount
+    return () => {
+      console.log("unsubscribing");
+      unsubscribe();
+    };
+  }, []);
+
+  return (
+    <Fragment>
+      <h1>List</h1>
+      {map(data, (value, idx) => (
+        <h5 key={idx}>{average(value.list)}</h5>
+      ))}
+    </Fragment>
+  );
 };
 
 export default List;
