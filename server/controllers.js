@@ -1,12 +1,6 @@
-import Twit from "twit";
-
-// configs
-import {
-  TWITTER_API_SECRET,
-  TWITTER_API_KEY,
-  TWITTER_ACCESS_TOKEN,
-  TWITTER_ACCESS_TOKEN_SECRET,
-} from "./configs/twitter.configs";
+// model
+import hashtagModel from "./models/hashtag.model";
+import notificationModel from "./models/notifications.model";
 
 // utils
 import response from "./utils/response";
@@ -15,31 +9,84 @@ import catchError from "./utils/catchError";
 
 const controller = {};
 
-// twitter setting
-let T = new Twit({
-  consumer_key: TWITTER_API_KEY,
-  consumer_secret: TWITTER_API_SECRET,
-  access_token: TWITTER_ACCESS_TOKEN,
-  access_token_secret: TWITTER_ACCESS_TOKEN_SECRET,
-  timeout_ms: 60 * 1000, // optional HTTP request timeout to apply to all requests.
-  strictSSL: true, // optional - requires SSL certificates to be valid.
+//  save hashtag in database -------------------------------------------
+controller.saveHashtag = catchError(async (req, res, next) => {
+  if (!!req.validationErr)
+    return response(res, null, req.validationErr, true, 400);
+
+  let { name, limit = 0 } = req.body;
+  let hashtag = new hashtagModel({ name, limit });
+  hashtag = await hashtag.save();
+  response(res, hashtag, "hashtag saved", false, 200);
 });
 
-//  user signin control -------------------------------------------
-controller.allWell = catchError(async (req, res, next) => {
-  response(res, [], "server running well", false, 200);
+// all hashtags
+controller.allHashTags = catchError(async (req, res, next) => {
+  let allData = await hashtagModel.find({});
+
+  // if no data found
+  if (!allData || allData.length === 0)
+    return response(res, [], "No Hashtag found in database", false, 404);
+
+  // else
+  let hashtags = allData.map((data) => {
+    return data.name;
+  });
+  response(res, hashtags, "all hashtags", true, 200);
 });
 
-// fetch twitter tweets
-controller.tweets = catchError(async (req, res, next) => {
-  T.get(
-    "search/tweets",
-    { q: `#tbt`, count: 100, include_entities: true },
-    function (err, data, resp) {
-      console.log(data.length);
-      response(res, data, "tweets fetched", false, 200);
-    }
-  );
+// all limits wih hashtags
+controller.allLimits = catchError(async (req, res, next) => {
+  let allData = await hashtagModel.find({});
+
+  // if no data found
+  if (!allData || allData.length === 0)
+    return response(res, [], "No Hashtag found in database", true, 404);
+
+  // else
+  let hashtags = allData.map((data) => {
+    return { name: data.name, limit: data.limit };
+  });
+  response(res, hashtags, "all hashtags", false, 200);
+});
+
+// change limit
+controller.updateLimit = catchError(async (req, res, next) => {
+  if (!!req.validationErr)
+    return response(res, null, req.validationErr, true, 400);
+
+  let { name, limit } = req.body;
+
+  console.log(name, limit);
+
+  // find hashtag
+  let hashtag = await hashtagModel.findOne({ name });
+
+  // if not found
+  if (!hashtag)
+    return response(res, [], `${name} is not in database`, true, 404);
+
+  // else
+  hashtag.limit = limit;
+  hashtag = await hashtag.save();
+
+  response(res, hashtag, `${name} limit changed to ${limit}`, false, 200);
+});
+
+// save notification
+controller.saveNotification = catchError(async (req, res, next) => {
+  if (!!req.validationErr)
+    return response(res, null, req.validationErr, true, 400);
+  let { name, limit } = req.body;
+  let notification = new notificationModel({ name, limit });
+  notification = await notification.save();
+  response(res, notification, "notification saved", false, 200);
+});
+
+// all notifications
+controller.allNotifications = catchError(async (req, res, next) => {
+  let allData = await notificationModel.find({});
+  response(res, allData, "all notifications", true, 200);
 });
 
 export default controller;

@@ -1,6 +1,9 @@
 import Twit from "twit";
 import { map } from "lodash";
 
+// hashtags
+import hashtagModel from "../models/hashtag.model";
+
 // configs
 import {
   TWITTER_API_SECRET,
@@ -25,12 +28,16 @@ const startIO = (io) => {
     console.log("connecting to client...");
 
     // subscribe
-    client.on("subscribe", (hashtags) => {
-      console.log("client sent hashtags==>", hashtags);
+    client.on("subscribe", async () => {
+      let data = await hashtagModel.find({});
+      let hashtags = data.map((value) => value.name);
+      console.log("client subscribed..");
+
       for (let hashtag of hashtags) {
         console.log(`connecting for ${hashtag}..done`);
         streams[hashtag] = T.stream("statuses/filter", { track: hashtag });
         streams[hashtag].on("tweet", function (tweet) {
+          console.log(hashtag, "==>", tweet.text.length);
           io.emit(hashtag, tweet.text.length);
         });
       }

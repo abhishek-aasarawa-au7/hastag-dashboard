@@ -6,8 +6,6 @@ const socket = openSocket(serverURL, {
   transports: ["websocket"],
 });
 
-if (socket.disconnect) console.log("not able to connect..");
-
 // // if connection failed
 // socket.on("connect_failed", () => {
 //   console.log(
@@ -26,7 +24,7 @@ export const subscribe = (cb, hashtags) => {
   for (let hashtag of hashtags) {
     socket.on(hashtag, (value) => cb(null, value, hashtag));
   }
-  socket.emit("subscribe", hashtags);
+  socket.emit("subscribe");
 
   // if for any reason server disconnected
   socket.on("disconnect", () => {
