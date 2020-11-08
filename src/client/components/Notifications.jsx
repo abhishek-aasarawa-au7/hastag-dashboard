@@ -14,9 +14,11 @@ const useStyles = makeStyles((theme) => ({
   root: {
     flexGrow: 1,
     maxWidth: 752,
+    height: "80vh",
   },
   demo: {
     backgroundColor: theme.palette.background.paper,
+    height: "95%",
   },
   title: {
     margin: theme.spacing(4, 0, 2),
@@ -53,7 +55,7 @@ export default function InteractiveList() {
       </Typography>
       <div className={classes.demo}>
         <List
-          style={{ overflow: "hidden", overflowY: "scroll", height: "70%" }}
+          style={{ overflow: "hidden", overflowY: "scroll", height: "90%" }}
         >
           {map(notifications, (notification, idx) => (
             <ListItem key={idx}>
