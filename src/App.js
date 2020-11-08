@@ -1,7 +1,7 @@
 import React, { Fragment } from "react";
 
 // components
-import List from "./client/components/List";
+import List from "./client/components/Dashboard";
 import Buttons from "./client/components/Buttons";
 
 function App() {
